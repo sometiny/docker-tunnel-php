@@ -3,8 +3,8 @@
 use Jazor\Http\Request;
 use Jazor\Uri;
 
-include_once './vendor/autoload.php';
-include_once './helper.php';
+include_once __DIR__ . '/./vendor/autoload.php';
+include_once __DIR__ . '/./helper.php';
 
 $hubHost = 'registry-1.docker.io';
 $authHost = 'auth.docker.io';
@@ -32,26 +32,18 @@ $remoteScheme = 'https';
 
 #inner proxy setup
 if (strpos($pathAndQuery, $TUNNEL_PROXY_START) === 0) {
-    $idx = strpos($pathAndQuery, $TUNNEL_PROXY_END);
-    if($idx === false) exit();
 
-    $proxyInfo = substr($pathAndQuery, 20, $idx - 20);
-
-    $pathAndQuery = substr($pathAndQuery, $idx + 17);
-
-    $idx = strpos($proxyInfo, '/');
-    if($idx === false) exit();
-
-    $remoteScheme = substr($proxyInfo, 0, $idx);
-    $newHost = substr($proxyInfo, $idx + 1);
+    $url = urldecode(substr($pathAndQuery, 20));
+    $uri = new Uri($url);
 
     #block proxy, just proxy for docker.com
-    if (strpos($newHost, '.docker.com') !== strlen($newHost) - 11) exit();
-
+    $hostName = $uri->getAuthority();
+    if (strpos($hostName, '.docker.com') !== strlen($hostName) - 11) exit();
+    $newUri = $url;
+}else{
+    #get uri for proxy
+    $newUri = $remoteScheme . '://' . $newHost . $pathAndQuery;
 }
-
-#get uri for proxy
-$newUri = $remoteScheme . '://' . $newHost . $pathAndQuery;
 
 #start proxy
 $req = new Request($newUri, $method);
@@ -92,7 +84,7 @@ if ($location) {
     $uri = new Uri($location);
     if ($uri->isFullUrl()) {
         $authority = $uri->getAuthority();
-        $newUri = sprintf('%s%s%s/%s%s%s%s', $localBase, $TUNNEL_PROXY_START, $uri->getSchema(), $authority, $TUNNEL_PROXY_END, $uri->getPathAndQuery(), $uri->getAnchor());
+        $newUri = sprintf('%s%s%s', $localBase, $TUNNEL_PROXY_START, urlencode($location));
         send_header('Location', $newUri);
     }
 }
