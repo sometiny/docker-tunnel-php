@@ -83,22 +83,22 @@ if ($location) {
     $uri = new Uri($location);
     if ($uri->isFullUrl()) {
         $authority = $uri->getAuthority();
-        $newUri = sprintf('%s%s%s/%s%s%s%s', $localBase,$TUNNEL_PROXY_START,$uri->getSchema(),$authority,$TUNNEL_PROXY_END,$uri->getPathAndQuery(),$uri->getAnchor());
-        send_header('Location',  $newUri);
+        $newUri = sprintf('%s%s%s/%s%s%s%s', $localBase, $TUNNEL_PROXY_START, $uri->getSchema(), $authority, $TUNNEL_PROXY_END, $uri->getPathAndQuery(), $uri->getAnchor());
+        send_header('Location', $newUri);
     }
 }
 
 $contentLength = $response->getContentLength();
-if($contentLength === 0) exit();
+if ($contentLength === 0) exit();
 
-if($method === 'HEAD'){
-    if($contentLength >= 0) send_header('Content-Length', $contentLength);
+if ($method === 'HEAD') {
+    if ($contentLength >= 0) send_header('Content-Length', $contentLength);
     exit();
 }
 
-if($contentLength >= 0 && !$response->getContentEncoding()){
+if ($contentLength >= 0 && !$response->getContentEncoding()) {
     send_header('Content-Length', $contentLength);
-    if($contentLength > 0) $response->sink('php://output');
+    if ($contentLength > 0) $response->sink('php://output');
     return;
 }
 
