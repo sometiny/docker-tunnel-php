@@ -1,8 +1,6 @@
 <?php
-
 use Jazor\Http\Request;
 use Jazor\Uri;
-
 include_once __DIR__ . '/./vendor/autoload.php';
 include_once __DIR__ . '/./helper.php';
 
@@ -26,21 +24,17 @@ $localBase = $scheme . '://' . $host;
 #ensure host to connect
 $newHost = strpos($requestUri, '/token?') === 0 ? AUTH_HOST : HUB_HOST;
 
-$remoteScheme = 'https';
-
 #inner proxy setup
 if (strpos($requestUri, TUNNEL_PROXY_START) === 0) {
-
     $url = urldecode(substr($requestUri, 20));
-    $uri = new Uri($url);
 
     #block proxy, just proxy for docker.com
-    $hostName = $uri->getAuthority();
+    $hostName = (new Uri($url))->getAuthority();
     if (strpos($hostName, '.docker.com') !== strlen($hostName) - 11) exit();
     $newUri = $url;
 }else{
     #get uri for proxy
-    $newUri = $remoteScheme . '://' . $newHost . $requestUri;
+    $newUri = 'https://' . $newHost . $requestUri;
 }
 
 #start proxy
@@ -61,42 +55,27 @@ header('HTTP/1.1 ' . $response->getStatusCode() . ' ' . $response->getStatusText
 $contentType = $response->getContentType();
 if ($contentType) send_header('Content-Type', $contentType);
 
-#passthrough docker header
-foreach ($headers as $name => $value) {
-    $values = (array)$value;
-    if (strpos($name, 'Docker-') === 0) {
-        foreach ($values as $v) send_header($name, $v);
-    }
-}
-
 #redirect authentication
 $auth = $response->getSingletHeader("Www-Authenticate");
-if ($auth) {
-    send_header("Www-Authenticate", str_replace(AUTH_BASE, $localBase, $auth));
-}
+if ($auth) send_header("Www-Authenticate", str_replace(AUTH_BASE, $localBase, $auth));
 
 #redirect location with inner proxy
 $location = $response->getLocation();
 if ($location) {
     $uri = new Uri($location);
-    if ($uri->isFullUrl()) {
-        $authority = $uri->getAuthority();
-        $newUri = sprintf('%s%s%s', $localBase, TUNNEL_PROXY_START, urlencode($location));
-        send_header('Location', $newUri);
-    }
+    if($uri->isFullUrl()) $location = TUNNEL_PROXY_START . urlencode($location);
+    send_header('Location', $localBase . $location);
 }
 
 $contentLength = $response->getContentLength();
-if ($contentLength === 0 || $method === 'HEAD') {
-    if ($contentLength >= 0) send_header('Content-Length', $contentLength);
-    exit();
-}
+if ($contentLength >= 0) send_header('Content-Length', $contentLength);
+
+if ($contentLength === 0 || $method === 'HEAD') exit();
 
 #sink to php://output
-if ($contentLength >= 0 && !$response->getContentEncoding()) {
-    send_header('Content-Length', $contentLength);
-    if ($contentLength > 0) $response->sink('php://output');
-    return;
+if ($contentLength > 0) {
+    $response->sink('php://output');
+    exit();
 }
 
 #send response body to client

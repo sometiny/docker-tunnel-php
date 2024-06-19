@@ -93,7 +93,7 @@ class Uri
 
     private function parseUrl($url)
     {
-        $matched = preg_match('/^(http(?:s)?):\/\/([\w\-.:]+?)(\/[^?#]*)?(\?[^#]*)?(#.*)?$/i', $url, $match);
+        $matched = preg_match('/^(https?):\/\/([\w\-.:]+?)(\/[^?#]*)?(\?[^#]*)?(#.*)?$/i', $url, $match);
         if (!$matched) return false;
 
         if (isset($match[5])) $this->anchor = $match[5];
