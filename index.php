@@ -6,19 +6,17 @@ use Jazor\Uri;
 include_once __DIR__ . '/./vendor/autoload.php';
 include_once __DIR__ . '/./helper.php';
 
-$hubHost = 'registry-1.docker.io';
-$authHost = 'auth.docker.io';
-$authBase = 'https://auth.docker.io';
-
-$TUNNEL_PROXY_START = '/TUNNEL_PROXY_START/';
-$TUNNEL_PROXY_END = '/TUNNEL_PROXY_END';
+const HUB_HOST = 'registry-1.docker.io';
+const AUTH_HOST = 'auth.docker.io';
+const AUTH_BASE = 'https://auth.docker.io';
+const TUNNEL_PROXY_START= '/TUNNEL_PROXY_START/';
 
 $headers = get_request_headers();
 unset($headers['Host']);
 unset($headers['Accept-Encoding']);
 
 $method = $_SERVER['REQUEST_METHOD'];
-$pathAndQuery = $_SERVER['REQUEST_URI'];
+$requestUri = $_SERVER['REQUEST_URI'];
 $host = $_SERVER['HTTP_HOST'];
 $scheme = $_SERVER['REQUEST_SCHEME'] ?? ($_SERVER['HTTPS'] === 'on' ? 'https' : 'http');
 
@@ -26,14 +24,14 @@ $scheme = $_SERVER['REQUEST_SCHEME'] ?? ($_SERVER['HTTPS'] === 'on' ? 'https' : 
 $localBase = $scheme . '://' . $host;
 
 #ensure host to connect
-$newHost = strpos($pathAndQuery, '/token?') === 0 ? $authHost : $hubHost;
+$newHost = strpos($requestUri, '/token?') === 0 ? AUTH_HOST : HUB_HOST;
 
 $remoteScheme = 'https';
 
 #inner proxy setup
-if (strpos($pathAndQuery, $TUNNEL_PROXY_START) === 0) {
+if (strpos($requestUri, TUNNEL_PROXY_START) === 0) {
 
-    $url = urldecode(substr($pathAndQuery, 20));
+    $url = urldecode(substr($requestUri, 20));
     $uri = new Uri($url);
 
     #block proxy, just proxy for docker.com
@@ -42,7 +40,7 @@ if (strpos($pathAndQuery, $TUNNEL_PROXY_START) === 0) {
     $newUri = $url;
 }else{
     #get uri for proxy
-    $newUri = $remoteScheme . '://' . $newHost . $pathAndQuery;
+    $newUri = $remoteScheme . '://' . $newHost . $requestUri;
 }
 
 #start proxy
@@ -74,8 +72,7 @@ foreach ($headers as $name => $value) {
 #redirect authentication
 $auth = $response->getSingletHeader("Www-Authenticate");
 if ($auth) {
-    $new_auth = str_replace($authBase, $localBase, $auth);
-    send_header("Www-Authenticate", str_replace($authBase, $localBase, $auth));
+    send_header("Www-Authenticate", str_replace(AUTH_BASE, $localBase, $auth));
 }
 
 #redirect location with inner proxy
@@ -84,7 +81,7 @@ if ($location) {
     $uri = new Uri($location);
     if ($uri->isFullUrl()) {
         $authority = $uri->getAuthority();
-        $newUri = sprintf('%s%s%s', $localBase, $TUNNEL_PROXY_START, urlencode($location));
+        $newUri = sprintf('%s%s%s', $localBase, TUNNEL_PROXY_START, urlencode($location));
         send_header('Location', $newUri);
     }
 }
