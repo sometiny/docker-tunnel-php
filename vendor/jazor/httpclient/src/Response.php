@@ -13,10 +13,7 @@ class Response extends Headers
     private ?string $body = null;
     private ?string $location = null;
     private ?string $allResponseHeaders = null;
-    private ?string $transferEncoding = null;
     private ?string $vary = null;
-    private ?string $contentEncoding = null;
-    private int $contentLength = -1;
     private Transporter $transporter;
     private Request $request;
 
@@ -53,18 +50,8 @@ class Response extends Headers
         $header = $this->getSingletHeader('Location');
         if ($header !== null) $this->location = $header;
 
-        $header = $this->getSingletHeader('Transfer-Encoding');
-        if ($header !== null) $this->transferEncoding = $header;
-
         $header = $this->getSingletHeader('Vary');
         if ($header !== null) $this->vary = $header;
-
-        $header = $this->getSingletHeader('Content-Encoding');
-        if ($header !== null) $this->contentEncoding = $header;
-
-        $header = $this->getSingletHeader('Content-Length');
-        // var_dump($header);
-        if ($header !== null) $this->contentLength = intval($header);
     }
 
     /**
@@ -245,32 +232,8 @@ class Response extends Headers
     /**
      * @return string|null
      */
-    public function getTransferEncoding(): ?string
-    {
-        return $this->transferEncoding;
-    }
-
-    /**
-     * @return string|null
-     */
     public function getVary(): ?string
     {
         return $this->vary;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getContentEncoding(): ?string
-    {
-        return $this->contentEncoding;
-    }
-
-    /**
-     * @return int
-     */
-    public function getContentLength(): int
-    {
-        return $this->contentLength;
     }
 }

@@ -5,8 +5,11 @@ namespace Jazor\Http;
 
 class Headers
 {
-    protected array $headers = [];
-    protected string $contentType = 'text/html';
+    private array $headers = [];
+    private string $contentType = 'text/html';
+    private ?string $contentEncoding = null;
+    private int $contentLength = -1;
+    private ?string $transferEncoding = null;
 
     /**
      * @return string
@@ -21,12 +24,43 @@ class Headers
         return $this->headers;
     }
 
+    /**
+     * @return string|null
+     */
+    public function getContentEncoding(): ?string
+    {
+        return $this->contentEncoding;
+    }
+
+    /**
+     * @return int
+     */
+    public function getContentLength(): int
+    {
+        return $this->contentLength;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTransferEncoding(): ?string
+    {
+        return $this->transferEncoding;
+    }
+
     protected function prepareHeaders()
     {
         $header = $this->getSingletHeader('Content-Type');
         if ($header !== null) $this->contentType = $header;
 
+        $header = $this->getSingletHeader('Content-Encoding');
+        if ($header !== null) $this->contentEncoding = $header;
 
+        $header = $this->getSingletHeader('Content-Length');
+        if ($header !== null) $this->contentLength = intval($header);
+
+        $header = $this->getSingletHeader('Transfer-Encoding');
+        if ($header !== null) $this->transferEncoding = $header;
     }
 
 
