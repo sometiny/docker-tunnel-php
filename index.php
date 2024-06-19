@@ -60,7 +60,7 @@ $headers = $response->getHeaders();
 
 header('HTTP/1.1 ' . $response->getStatusCode() . ' ' . $response->getStatusText());
 
-$contentType = $response->getSingletHeader('Content-Type');
+$contentType = $response->getContentType();
 if ($contentType) send_header('Content-Type', $contentType);
 foreach ($headers as $name => $value) {
     $values = (array)$value;
@@ -77,13 +77,13 @@ if ($auth) {
 }
 
 
-$location = $response->getSingletHeader('location');
+$location = $response->getLocation();
 
 if ($location) {
     $uri = new Uri($location);
     if ($uri->isFullUrl()) {
         $authority = $uri->getAuthority();
-        $newUri = "$localBase$TUNNEL_PROXY_START{$uri->getSchema()}/$authority$TUNNEL_PROXY_END{$uri->getPathAndQuery()}{$uri->getAnchor()}";
+        $newUri = sprintf('%s%s%s/%s%s%s%s', $localBase,$TUNNEL_PROXY_START,$uri->getSchema(),$authority,$TUNNEL_PROXY_END,$uri->getPathAndQuery(),$uri->getAnchor());
         send_header('Location',  $newUri);
     }
 }
