@@ -1,3 +1,4 @@
+## 方式1
 php自建dockerhub反代；
 
 ```nginx
@@ -13,3 +14,6 @@ location / {
   "registry-mirrors":["你自己的服务地址"]
 }
 ```
+
+## 方式2
+参考bin目录
